@@ -17,8 +17,7 @@ const c3 = initC3(window);
 fromDate.setAttribute("value", new Day().toString());
 toDate.setAttribute("value", new Day().dayAfter(59).toString());
 
-const getFile = async (fn) => {
-  const url = `./latest_dino_sum.csv`;
+const getFile = async (url) => {
   const csv = await CSV.fetch(url);
   const map = {
     "n_people": "利用総人数",
@@ -111,6 +110,24 @@ const showChart = (bindto, columns) => {
   });
 };
 
+// データが有効なファイル名をここで決定する
+let dinosaurDataUrl = "./latest_dino_sum.csv";
+let baseDate = new Day();
+const thresholdPeople = 0
+while (true) {
+  const dinosaurData = await getFile(dinosaurDataUrl);
+  const totalPeople = dinosaurData.reduce((sum, d) => {
+    return sum + parseInt(d.利用総人数);
+  }, 0);
+  
+  if (totalPeople > thresholdPeople) {
+    break;
+  }
+
+  baseDate = baseDate.prevDay();
+  dinosaurDataUrl = "./data/" + baseDate.toString() + ".csv";
+}
+
 const show = async (startDate, endDate) => {
   if (!startDate || !endDate) {
     return;
@@ -118,7 +135,7 @@ const show = async (startDate, endDate) => {
 
   const colnames = ["利用総人数", NAME_FEE];
   
-  const data = await getFile();
+  const data = await getFile(dinosaurDataUrl);
   const startday = new Day(startDate);
   const endday = new Day(endDate);
   
